@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V2Ray Configuration Helper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+            line-height: 1.6;
+        }
+        .form-container {
+            display: flex;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .form-section {
+            width: 50%;
+            padding: 30px;
+        }
+        .info-section {
+            background-color: #f8f9fa;
+            border-left: 1px solid #e0e0e0;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        .form-step {
+            display: none;
+        }
+        .form-step.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            position: relative;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .info-icon {
+            position: absolute;
+            right: 10px;
+            top: 35px;
+            cursor: pointer;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .info-content {
+            background-color: #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            display: none;
+        }
+        .info-content.show {
+            display: block;
+        }
+        #configOutput, #qrCodeContainer {
+            margin-top: 20px;
+        }
+        .progress-container {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .progress-step {
+            flex: 1;
+            height: 5px;
+            background-color: #e0e0e0;
+            margin-right: 5px;
+        }
+        .progress-step.active {
+            background-color: #4CAF50;
+        }
+		#generateUUIDBtn {
+    margin-top: 5px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+      .validation-alert {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .input-error {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+		   #configOutput {
+            margin-top: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .config-display-container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+        
+        .config-text-section {
+            flex: 2;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 20px;
+        }
+        
+        .config-text-section pre {
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .qr-code-section {
+            flex: 1;
+            text-align: center;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 20px;
+        }
+        
+        .qr-code-section img {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        
+        .config-action-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .config-action-btn:hover {
+            background-color: #0056b3;
+        }
+
+	
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="form-section">
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-step"></div>
+                <div class="progress-step"></div>
+                <div class="progress-step"></div>
+                
+				
+            </div>
+
+            <form id="v2rayForm">
+                
+                <div class="form-step active" data-step="1">
+                    <h2>Choose Your Connection Protocol</h2>
+                    <div class="form-group">
+                        <label for="protocol">Connection Protocol</label>
+                        <select id="protocol" required>
+                            <option value="">Select Your Connection Type</option>
+                            <option value="vmess">VMess (Recommended)</option>
+                            <option value="vless">VLESS</option>
+
+                        </select>
+                        <span class="info-icon">ℹ️</span>
+                        <div class="info-content">
+                            <p>Each protocol has different features:</p>
+                            <ul>
+                                <li><strong>VMess:</strong> Most common, good balance of security and speed</li>
+                                <li><strong>VLESS:</strong> Lightweight, less overhead but not work in all networks</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="next-step">Next</button>
+                    </div>
+                </div>
+
+                
+                <div class="form-step" data-step="2">
+                    <h2>Your Connection Details</h2>
+                    <div class="form-group">
+                        <label for="userId">User ID</label>
+                        <input type="text" id="userId" required placeholder="Enter your UUID or press generate to get one">
+						    <button type="button" id="generateUUIDBtn">Generate UUID</button>
+
+                        <span class="info-icon">ℹ️</span>
+                        <div class="info-content">
+                            <p>This is a unique identifier That make your requests unique and identifiable by v2ray server</p>
+                            
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="port">Port</label>
+                        <input type="number" id="port" required placeholder="Enter port number">
+                        <span class="info-icon">ℹ️</span>
+                        <div class="info-content">
+                            <p>The port is like a door that your internet connection travels through.</p>
+                            <p>for tls (bypassing firewall) , firstly try 443 then if don't work try to use another port </p>
+                            <p>if you dont use this to bypass firewall and don't need tls use 80</p>
+
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="prev-step">Previous</button>
+                        <button type="button" class="next-step">Next</button>
+                    </div>
+                </div>
+
+                
+                <div class="form-step" data-step="3">
+                    <h2>Network Configuration</h2>
+                    <div class="form-group">
+                        <label for="network">Connection Method</label>
+                        <select id="network" required>
+                            <option value="">Select Network Type</option>
+                            <option value="tcp">TCP (Recommended)</option>
+                            <option value="ws">WebSocket</option>
+                            <option value="grpc">gRPC</option>
+                        </select>
+                        <span class="info-icon">ℹ️</span>
+                        <div class="info-content">
+                            <p>This determines how your internet traffic is transmitted:</p>
+                            <ul>
+                                <li><strong>TCP:</strong> Traditional, most compatible method and works in most times</li>
+                                <li><strong>WebSocket:</strong> Good for bypassing some network restrictions but slows down internet speed try tcp first</li>
+                                <li><strong>gRPC:</strong> New , Modern and efficient</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="encryption">Security Level</label>
+                        <select id="encryption" required>
+                            <option value="">Select Encryption</option>
+                            <option value="auto">Automatic (Recommended)</option>
+                            <option value="aes-128-gcm">High Security</option>
+                            <option value="chacha20-poly1305">Maximum Security</option>
+                            <option value="none">No Encryption (Not Recommended)</option>
+                        </select>
+                        <span class="info-icon">ℹ️</span>
+                        <div class="info-content">
+                            <p>Encryption protects your internet traffic from being read and from hacking:</p>
+                            <ul>
+                                <li><strong>Automatic:</strong> Balanced security and performance</li>
+                                <li><strong>High Security:</strong> Strong protection for most users</li>
+                                <li><strong>Maximum Security:</strong> Best protection, slight speed reduction</li>
+                                <li><strong>No Encryption:</strong> Avoid this option, very risky and not safe!</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="prev-step">Previous</button>
+                        <button type="button" class="next-step">Next</button>
+                    </div>
+                </div>
+
+                
+                <div class="form-step" data-step="4">
+                    <h2>Finishing Up</h2>
+                    <div class="form-group">
+                        <label for="remarks">Connection Name</label>
+                        <input type="text" id="remarks" placeholder="Give a name for this connection (Optional)">
+                        <span class="info-icon">ℹ️</span>
+                        <div class="info-content">
+                            <p>Choose a name that helps you remember this connection and make it identifiable to avoid overwhelming.</p>
+                        </div>
+                    </div>
+					<div class="form-group">
+    <label for="sni">Server Name Indication (SNI)</label>
+    <input type="text" id="sni" placeholder="enter SNI hostname (Optional)">
+    <span class="info-icon">ℹ️</span>
+    <div class="info-content">
+        <p>SNI helps mask your traffic and make it undetectable (For bypassing firewalls)</p>
+        <p>use a domain that allowed in your network</p>
+    </div>
+</div>
+                    <div class="btn-group">
+                        <button type="button" class="prev-step">Previous</button>
+                        <button type="submit">Generate</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="info-section">
+            <div id="stepInfo">
+                <h3>V2Ray Forms</h3>
+				<p>This form will help you create a V2ray configration step by step. the form will guide you through each setting with simple explanations to help you.</p>
+                <p>Click the ℹ️ icons for get explanation for any option.</p>
+				<h4>firstly , Choose Your Connection protocol</h4>
+				<p>Different protocols offer Different encryption and performance. I recommend VMess for most networks so try it first if not working choose vless.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="configOutput"></div>
+    <div id="qrCodeContainer"></div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <script>
+
+function generateUUID() {
+    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
+}
+
+
+const stepInfoContent = {
+    1: `
+    <h3>Welcome to V2Ray Forms</h3>
+				<p>This form will help you create a V2ray configration step by step. the form will guide you through each setting with simple explanations to help you.</p>
+                <p>Click the ℹ️ icons for get explanation for any option.</p>
+				<h4>firstly , Choose Your Connection protocol</h4>
+				<p>Different protocols offer Different encryption and performance. I recommend VMess for most networks so try it first if not working choose vless.</p>
+    `,
+    2: `
+        <h3>Your Personal Connection Details</h3>
+        <p> Here you can set the port and uuid if you need any help or don't understand any thing click ℹ️ button</p>
+        
+    `,
+    3: `
+        <h3>Network and Security Settings</h3>
+        <p>Here you'll configure how your internet connection is established and protected.</p>
+        <p>if you need any help or don't understand any thing click ℹ️ button</p>
+    `,
+    4: `
+        <h3>Almost Done!</h3>
+        <p>You're just one step away from generating your V2ray configuration easily and fastly.</p>
+        <p>Add a name and SNI (for bypassing firewalls) if you like and then click 'Generate'.</p>
+    `
+};
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Configuration copied to clipboard!');
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+    });
+}
+
+  function generateQRCode(data) {
+            const configOutput = document.getElementById('configOutput');
+            const qrCodeContainer = document.getElementById('qrCodeContainer');
+            
+            
+            qrCodeContainer.innerHTML = '';
+            
+            try {
+                
+                const qr = qrcode(0, 'M');
+                qr.addData(data);
+                qr.make();
+
+                
+                const displayContainer = document.createElement('div');
+                displayContainer.classList.add('config-display-container');
+
+                
+                const configSection = document.createElement('div');
+                configSection.classList.add('config-text-section');
+                configSection.innerHTML = `
+                    <h3>Your Configuration is Ready</h3>
+                    <pre id="configText">${JSON.stringify(JSON.parse(data), null, 2)}</pre>
+                    <button class="config-action-btn" onclick="copyToClipboard(document.getElementById('configText').textContent)">
+                        Copy Configuration
+                    </button>
+                `;
+
+                
+                const qrSection = document.createElement('div');
+                qrSection.classList.add('qr-code-section');
+                const imgTag = qr.createImgTag(5); 
+                qrSection.innerHTML = `
+                    ${imgTag}
+                    <p>Scan this QR code with your V2Ray client</p>
+                    <p>For Windows use V2rayN</p>
+                    <p>For Android use V2rayNG</p>
+                    <p>For IOS/Mac use V2Box</p>
+                `;
+
+                
+                displayContainer.appendChild(configSection);
+                displayContainer.appendChild(qrSection);
+
+                
+                configOutput.innerHTML = '';
+                configOutput.appendChild(displayContainer);
+
+            } catch (error) {
+                console.error('QR Code generation error:', error);
+                configOutput.innerHTML = '<p>Failed to generate QR Code</p>';
+            }
+        }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('v2rayForm');
+    const steps = document.querySelectorAll('.form-step');
+    const progressSteps = document.querySelectorAll('.progress-step');
+    const infoSection = document.querySelector('.info-section');
+    const stepInfoContainer = document.getElementById('stepInfo');
+    let currentStep = 1;
+
+    document.getElementById('generateUUIDBtn').addEventListener('click', () => {
+        const uuidInput = document.getElementById('userId');
+        uuidInput.value = generateUUID();
+    });
+
+    document.querySelectorAll('.info-icon').forEach(icon => {
+        icon.addEventListener('click', (e) => {
+            const infoContent = e.target.nextElementSibling;
+            infoContent.classList.toggle('show');
+        });
+    });
+
+
+     function validateStep(step) {
+            const currentStepElement = document.querySelector(`.form-step[data-step="${step}"]`);
+            const requiredInputs = currentStepElement.querySelectorAll('[required]');
+            let isValid = true;
+
+            
+            document.querySelectorAll('.validation-alert').forEach(alert => alert.remove());
+            
+            requiredInputs.forEach(input => {
+                input.classList.remove('input-error');
+
+                if (!input.value.trim()) {
+                    isValid = false;
+                    input.classList.add('input-error');
+
+                    const alert = document.createElement('div');
+                    alert.classList.add('validation-alert');
+                    
+                    const labelText = input.previousElementSibling ? 
+                        input.previousElementSibling.textContent : 'This field';
+                    
+                    alert.textContent = `${labelText} is required.`;
+                    
+                    input.parentNode.insertBefore(alert, input.nextSibling);
+                    alert.style.display = 'block';
+                    if (isValid === false) {
+                        input.focus();
+                    }
+                }
+            });
+
+            return isValid;
+        }
+
+    function moveToStep(step) {
+        steps.forEach(s => s.classList.remove('active'));
+        
+        const targetStep = document.querySelector(`.form-step[data-step="${step}"]`);
+        targetStep.classList.add('active');
+        
+        currentStep = step;
+        updateProgress();
+        stepInfoContainer.innerHTML = stepInfoContent[currentStep];
+    }
+
+    function updateProgress() {
+        progressSteps.forEach((step, index) => {
+            if (index < currentStep - 1) {
+                step.classList.add('active');
+            } else {
+                step.classList.remove('active');
+            }
+        });
+    }
+
+    document.querySelectorAll('.next-step').forEach(button => {
+        button.addEventListener('click', () => {
+            if (validateStep(currentStep)) {
+                moveToStep(currentStep + 1);
+            }
+        });
+    });
+
+    document.querySelectorAll('.prev-step').forEach(button => {
+        button.addEventListener('click', () => {
+            moveToStep(currentStep - 1);
+        });
+    });
+
+    async function generateV2RayConfig(data) {
+    const config = {
+        ps: data.remarks,
+        add: data.serverAddress,
+        port: data.port,
+        id: data.userId,
+        net: data.network,
+        host: data.host || "",
+        path: data.path || "",
+        sni: data.sni || "",
+        protocol: data.protocol,
+        encryption: data.encryption
+    };
+
+    return config; 
+}
+
+   
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = {
+            protocol: document.getElementById('protocol').value,
+            userId: document.getElementById('userId').value,
+            port: document.getElementById('port').value,
+            network: document.getElementById('network').value,
+            encryption: document.getElementById('encryption').value,
+            remarks: document.getElementById('remarks').value,
+            sni: document.getElementById('sni').value || '',
+            serverAddress: document.getElementById('serverAddress')?.value || 'v2ray.server.com',
+            host: document.getElementById('host')?.value || '',
+            path: document.getElementById('path')?.value || ''
+        };
+
+        try {
+            const config = await generateV2RayConfig(formData);
+            generateQRCode(JSON.stringify(config));
+        } catch (error) {
+            console.error('Configuration error:', error);
+            alert('Failed to generate configuration. Please try again.');
+        }
+    });
+});
+		
+		
+    </script>
+</body>
+</html>
